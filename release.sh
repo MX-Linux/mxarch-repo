@@ -178,6 +178,7 @@ print_step "Pushing to AUR"
 git fetch -q "$AUR_REMOTE" "refs/heads/master:refs/remotes/$AUR_REMOTE/master" 2>/dev/null || true
 
 subdirs=$(git ls-tree -r --name-only "$MAIN_BRANCH" | grep '/' || true)
+# shellcheck disable=SC2001  # sed is the clear way to indent a multi-line list
 [[ -z $subdirs ]] || die "AUR rejects commits containing subdirectories, and this
 tree has some. Move these to top level or drop them before releasing:
 $(echo "$subdirs" | sed 's/^/    /')"
