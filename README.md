@@ -14,6 +14,22 @@ the repository preconfigured from the ISO and do not need it.
     sudo mxarch-enable
     sudo pacman -Syu
 
+### Without an AUR helper
+
+    sudo pacman -U https://github.com/MX-Linux/mxarch-repo/releases/latest/download/mxarch-repo.pkg.tar.zst
+    sudo mxarch-enable
+    sudo pacman -Syu
+
+From a GitHub release rather than from `arch.mxrepo.com`, because every file in
+the repository has a `.sig` beside it: `pacman -U` from there fetches a
+signature made by a key you do not have yet and refuses it as unknown trust. A
+release asset has no `.sig`, so pacman finds no signature, the default
+`LocalFileSigLevel = Optional` permits the install, and the package brings the
+key with it.
+
+The asset is named `mxarch-repo.pkg.tar.zst` with no version, so that URL is
+permanent. pacman reads the real version from `.PKGINFO`.
+
 `mxarch-enable` appends the `[mxarch]` section to `/etc/pacman.conf`, keeping a
 timestamped backup of the previous file. The section goes last, so the official
 repositories keep precedence.
