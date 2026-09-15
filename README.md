@@ -11,21 +11,26 @@ the repository preconfigured from the ISO and do not need it.
 ## Enabling the repository
 
     paru -S mxarch-repo
+    sudo mxarch-enable
+    sudo pacman -Syu
 
-then add to `/etc/pacman.conf`:
+`mxarch-enable` appends the `[mxarch]` section to `/etc/pacman.conf`, keeping a
+timestamped backup of the previous file. It is idempotent - run twice and it
+says the repository is already enabled rather than adding a second section - and
+it refuses to touch a `pacman.conf` that mentions `mxarch` without having an
+`[mxarch]` section, since that means someone has edited it in a way the script
+should not guess at. The section goes last, so the official repositories keep
+precedence.
 
-    [mxarch]
-    SigLevel = Required DatabaseRequired
-    Include = /etc/pacman.d/mxarch-mirrorlist
-
-and `sudo pacman -Sy`. The install script prints this reminder itself, and stays
-quiet once `[mxarch]` is present.
+The install script prints this reminder itself, and stays quiet once `[mxarch]`
+is present.
 
 ## What it installs
 
     /usr/share/pacman/keyrings/mxarch.gpg       repository signing key
     /usr/share/pacman/keyrings/mxarch-trusted   its fingerprint and trust level
     /etc/pacman.d/mxarch-mirrorlist             Server = ... (backup=, so edits survive)
+    /usr/bin/mxarch-enable                      adds the [mxarch] section to pacman.conf
 
 The install script runs `pacman-key --populate mxarch`, which imports the key and
 applies the declared trust - rather than making users run `pacman-key --add` and
@@ -33,6 +38,20 @@ applies the declared trust - rather than making users run `pacman-key --add` and
 
 `pacman.conf` uses `Include =` rather than a literal `Server =` so the hosting
 can move later without every user editing `pacman.conf` again.
+
+## Why enabling is a separate command
+
+`/etc/pacman.conf` belongs to the `pacman` package, and a package should not
+edit another package's config as a side effect of being installed. The removal
+path is the genuinely risky half: un-appending a section from a file the user
+may have edited means `sed` against unknown content, and a botched edit there
+breaks all package management, not just this repository.
+
+Run deliberately - by hand, or from a GUI where the user clicked something
+labelled "Enable MX Arch repo" - that objection does not apply, because the
+config change is the thing being asked for rather than a hidden consequence of
+something else. Hence a command the user runs, rather than a `post_install`
+that rewrites `pacman.conf` behind them.
 
 ## The key expires 2027-05-30
 

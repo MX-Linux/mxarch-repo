@@ -1,0 +1,54 @@
+#!/bin/bash
+# Enable the MX Linux Arch repository (mxarch) in /etc/pacman.conf.
+#
+# Deliberately a separate command rather than something mxarch-repo does on
+# install: /etc/pacman.conf belongs to the pacman package, and editing another
+# package's config as a silent side effect of installing is not a thing a
+# package should do - not least because the removal path would have to sed a
+# file the user may have edited, and a botched edit there breaks all package
+# management, not just this repository. Run deliberately, by hand or from a GUI
+# where the user asked for it, none of that applies.
+set -euo pipefail
+
+CONF=/etc/pacman.conf
+MIRRORLIST=/etc/pacman.d/mxarch-mirrorlist
+
+die() { printf '%s\n' "$*" >&2; exit 1; }
+
+[ "$(id -u)" -eq 0 ] || die "mxarch-enable must be run as root."
+[ -f "$CONF" ] || die "$CONF does not exist."
+[ -f "$MIRRORLIST" ] || die "$MIRRORLIST is missing - reinstall mxarch-repo."
+
+if grep -q '^[[:space:]]*\[mxarch\]' "$CONF"; then
+    echo "The mxarch repository is already enabled in $CONF."
+    exit 0
+fi
+
+# Any other mention of mxarch means the file has been edited in a way this
+# script should not guess at - a commented-out section, an abandoned edit, a
+# differently named section already using our mirrorlist. Appending a second
+# one could give pacman a duplicate or a conflicting definition.
+if grep -qi 'mxarch' "$CONF"; then
+    die "$CONF already mentions mxarch but has no [mxarch] section.
+Refusing to guess. Add the section by hand instead:
+
+    [mxarch]
+    SigLevel = Required DatabaseRequired
+    Include = $MIRRORLIST"
+fi
+
+backup="$CONF.$(date +%Y%m%d%H%M%S).bak"
+cp -a "$CONF" "$backup"
+
+# Appended last, so the official repositories keep precedence over mxarch.
+cat >> "$CONF" <<EOF
+
+[mxarch]
+SigLevel = Required DatabaseRequired
+Include = $MIRRORLIST
+EOF
+
+echo "Enabled the mxarch repository in $CONF."
+echo "Previous file saved as $backup"
+echo
+echo "Now run:  pacman -Syu"

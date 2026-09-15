@@ -10,13 +10,11 @@ post_install() {
         cat <<'MSG'
 
 ==> The mxarch repository is installed but not enabled yet.
-    Add this to /etc/pacman.conf, below the other repository sections:
 
-        [mxarch]
-        SigLevel = Required DatabaseRequired
-        Include = /etc/pacman.d/mxarch-mirrorlist
+    Run:  sudo mxarch-enable
 
-    then run:  pacman -Sy
+    That adds the [mxarch] section to /etc/pacman.conf, keeping a backup of
+    the previous file. Then:  sudo pacman -Syu
 
 MSG
     fi
