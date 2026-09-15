@@ -1,2 +1,9 @@
-# The AUR clone: a separate git repository, pushed to aur.archlinux.org.
+# makepkg build output - created by `makepkg -si` in this directory.
+src/
+pkg/
+*.pkg.tar.zst
+*.pkg.tar.zst.sig
+*.log
+
+# The AUR clone, when one is made here: a separate git repository.
 aur/
