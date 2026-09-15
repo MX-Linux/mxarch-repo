@@ -2,8 +2,28 @@
 # relative on purpose.
 
 post_install() {
-    if usr/bin/pacman-key -l >/dev/null 2>&1; then
-        usr/bin/pacman-key --populate mxarch
+    # No guard on whether the keyring looks usable: the previous version tested
+    # `pacman-key -l`, which succeeds on a keyring that has no master signing
+    # key, so --populate then failed and the failure was swallowed. The package
+    # reported success, installed nothing into the keyring, and told the user to
+    # enable the repository - which wedges pacman. Run it, and say so if it
+    # fails.
+    if ! usr/bin/pacman-key --populate mxarch; then
+        cat <<'MSG'
+
+==> WARNING: the mxarch signing key could NOT be added to the pacman keyring.
+
+    Do not enable the repository until this is fixed. pacman refuses to run at
+    all while an enabled repository's database cannot be verified - including
+    the transaction that would repair it.
+
+    Usually the keyring has no master signing key yet:
+
+        sudo pacman-key --init
+        sudo pacman-key --populate mxarch
+
+MSG
+        return 0
     fi
 
     if ! grep -q '^\[mxarch\]' etc/pacman.conf 2>/dev/null; then

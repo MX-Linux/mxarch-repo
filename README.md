@@ -15,12 +15,22 @@ the repository preconfigured from the ISO and do not need it.
     sudo pacman -Syu
 
 `mxarch-enable` appends the `[mxarch]` section to `/etc/pacman.conf`, keeping a
-timestamped backup of the previous file. It is idempotent - run twice and it
-says the repository is already enabled rather than adding a second section - and
-it refuses to touch a `pacman.conf` that mentions `mxarch` without having an
-`[mxarch]` section, since that means someone has edited it in a way the script
-should not guess at. The section goes last, so the official repositories keep
-precedence.
+timestamped backup of the previous file. The section goes last, so the official
+repositories keep precedence.
+
+It refuses to do anything in three cases:
+
+- **the signing key is not trusted in the pacman keyring.** This one matters
+  most. With `SigLevel = Required`, an enabled repository whose database will
+  not verify makes *every* pacman transaction fail - including the one that
+  would install the key - so the system needs manual recovery and the error
+  says nothing about how. Checking first turns that into a message. Override
+  with `--force` if you know what you are doing.
+- **`[mxarch]` is already there.** Says so and exits 0; no duplicate section.
+- **`pacman.conf` mentions `mxarch` but has no `[mxarch]` section** - a
+  commented-out block, an abandoned edit, another section already using the
+  mirrorlist. That is an edit the script should not guess at, so it prints the
+  section and leaves the file alone.
 
 The install script prints this reminder itself, and stays quiet once `[mxarch]`
 is present.
