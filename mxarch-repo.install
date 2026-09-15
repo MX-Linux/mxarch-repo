@@ -1,0 +1,35 @@
+# Install scripts run chrooted into the install root, so these paths are
+# relative on purpose.
+
+post_install() {
+    if usr/bin/pacman-key -l >/dev/null 2>&1; then
+        usr/bin/pacman-key --populate mxarch
+    fi
+
+    if ! grep -q '^\[mxarch\]' etc/pacman.conf 2>/dev/null; then
+        cat <<'MSG'
+
+==> The mxarch repository is installed but not enabled yet.
+    Add this to /etc/pacman.conf, below the other repository sections:
+
+        [mxarch]
+        SigLevel = Required DatabaseRequired
+        Include = /etc/pacman.d/mxarch-mirrorlist
+
+    then run:  pacman -Sy
+
+MSG
+    fi
+}
+
+# Also on upgrade: the key is re-populated so a renewed expiry date takes
+# effect, and the reminder reappears only while [mxarch] is still missing.
+post_upgrade() {
+    post_install
+}
+
+pre_remove() {
+    if usr/bin/pacman-key -l >/dev/null 2>&1; then
+        usr/bin/pacman-key --delete A220D6ABB427CF38A8C5E560442D90008FE173AE 2>/dev/null || true
+    fi
+}
